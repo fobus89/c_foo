@@ -11,8 +11,4 @@ add_executable(main src/main.c)
 target_link_libraries(main PRIVATE library)
 
 enable_testing()
-
-add_executable(test_library tests/test_library.c)
-target_link_libraries(test_library PRIVATE library)
-
-add_test(NAME library_check COMMAND test_library)
+add_subdirectory(tests)

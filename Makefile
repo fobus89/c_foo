@@ -7,4 +7,7 @@ build:
 	@cmake --build build > /dev/null
 
 run_build: build
-	@./build/main
+	./build/main
+
+test: build
+	@ctest --test-dir build --output-on-failure

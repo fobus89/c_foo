@@ -50,6 +50,10 @@ typedef enum
     TOKEN_DIV,
     TOKEN_EQ,
     TOKEN_EQ_EQ,
+    TOKEN_LBRACE,
+    TOKEN_RBRACE,
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
 } typetype_t;
 
 typedef struct
@@ -102,6 +106,10 @@ static const symbol_t symbols[] = {
     SYMBOL("*", TOKEN_MULT),
     SYMBOL("/", TOKEN_DIV),
     SYMBOL("=", TOKEN_EQ),
+    SYMBOL("{", TOKEN_LBRACE),
+    SYMBOL("}", TOKEN_RBRACE),
+    SYMBOL("(", TOKEN_LPAREN),
+    SYMBOL(")", TOKEN_RPAREN),
 };
 #undef SYMBOL
 
@@ -112,3 +120,39 @@ lexer_error_t free_lexer(lexer_t *);
 lexer_error_t read_ident(lexer_t *, token_t *);
 lexer_error_t read_str(lexer_t *, token_t *);
 lexer_error_t read_keyword(lexer_t *, token_t *);
+
+// typedef struct
+// {
+//     enum
+//     {
+//         PART_TEXT,
+//         PART_EXPR
+//     } kind;
+
+//     const char *text;
+//     size_t text_len;
+
+//     token_t *tokens;
+//     size_t token_count;
+// } string_part_t;
+
+// typedef struct string_part string_part_t;
+
+// typedef struct
+// {
+//     typetype_t type;
+
+//     const char *literal;
+//     size_t len;
+
+//     union
+//     {
+//         double number;
+
+//         struct
+//         {
+//             string_part_t *parts;
+//             size_t count;
+//         } string;
+//     } value;
+// } token_t;

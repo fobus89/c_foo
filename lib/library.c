@@ -126,7 +126,9 @@ lexer_error_t read_number(lexer_t *lexer, token_t *token)
   while (isdigit(LEX_CURRENT_UCHAR(lexer)))
     lexer->pos++;
 
-  if (isspace(LEX_CURRENT_UCHAR(lexer)) || LEX_CURRENT_UCHAR(lexer) == '\0')
+  if (isspace(LEX_CURRENT_UCHAR(lexer)) ||
+      ispunct(LEX_CURRENT_UCHAR(lexer)) ||
+      LEX_CURRENT_UCHAR(lexer) == '\0')
   {
     *token = (token_t){
         .type = TOKEN_NUMBER,
@@ -191,13 +193,85 @@ lexer_error_t read_str(lexer_t *lexer, token_t *token)
   if (LEX_CURRENT_UCHAR(lexer) != '"')
     return LEX_UNEXPECTED_CHAR;
 
-  size_t start = lexer->pos;
-  lexer->pos++;
+  size_t src_len = strlen(lexer->data);
 
-  while (lexer->data[lexer->pos] != '"' &&
-         lexer->data[lexer->pos] != '\0')
+  size_t start = lexer->pos;
+  lexer->pos++; // ignore "
+
+  static const char *keys[] = {
+      "\\{",
+      "\\}",
+      "\\n",
+      "\\r",
+      "\\t",
+      "\\\"",
+      "\\\\",
+  };
+
+  bool has_interpolation = false;
+
+  while (lexer->data[lexer->pos] != '\0')
   {
-    lexer->pos++;
+
+    size_t step = 1;
+
+    for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
+    {
+      size_t len = strlen(keys[i]);
+
+      if (strncmp(lexer->data + lexer->pos, keys[i], len) == 0)
+      {
+        printf("%s %zu\n", keys[i], len);
+        step = len;
+        break;
+      }
+    }
+
+    if (step != 1)
+    {
+      lexer->pos += step;
+      continue;
+    }
+
+    if (lexer->data[lexer->pos] == '{')
+    {
+      has_interpolation = true;
+
+      size_t brace_count = 1;
+
+      while (brace_count > 0 && lexer->data[lexer->pos] != '\0')
+      {
+
+        token_t tmp;
+        lexer_error_t err;
+        if ((err = next_token(lexer, &tmp)) != LEX_OK)
+        {
+          return err;
+        }
+
+        if (tmp.type == TOKEN_LBRACE)
+        {
+          brace_count++;
+        }
+        else if (tmp.type == TOKEN_RBRACE)
+        {
+          brace_count--;
+          if (brace_count == 0)
+          {
+            break;
+          }
+        }
+
+        printf("%.*s", (int)tmp.len, tmp.literal);
+      }
+    }
+
+    lexer->pos += step;
+
+    if (lexer->pos >= src_len || lexer->data[lexer->pos] == '"')
+    {
+      break;
+    }
   }
 
   if (lexer->data[lexer->pos] != '"')

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 
 static typetype_t ident_type(const char *literal, size_t len)
 {
@@ -89,7 +90,6 @@ lexer_error_t next_token(lexer_t *lexer, token_t *token)
   if (ch == '\0')
   {
     *token = (token_t){
-        .len = 0,
         .type = TOKEN_EOF,
     };
 
@@ -132,8 +132,10 @@ lexer_error_t read_number(lexer_t *lexer, token_t *token)
   {
     *token = (token_t){
         .type = TOKEN_NUMBER,
-        .literal = lexer->data + start,
-        .len = lexer->pos - start,
+        .data.c = {
+            .literal = lexer->data + start,
+            .len = lexer->pos - start,
+        },
     };
 
     return LEX_OK;
@@ -147,8 +149,10 @@ lexer_error_t read_number(lexer_t *lexer, token_t *token)
 
   *token = (token_t){
       .type = TOKEN_ILEGALL,
-      .literal = lexer->data + start,
-      .len = lexer->pos - start,
+      .data.c = {
+          .literal = lexer->data + start,
+          .len = lexer->pos - start,
+      },
   };
 
   return LEX_INVALID_NUMBER;
@@ -175,124 +179,189 @@ lexer_error_t read_ident(lexer_t *lexer, token_t *token)
 
   *token = (token_t){
       .type = TOKEN_IDENT,
-      .literal = lexer->data + start,
-      .len = lexer->pos - start,
+      .data.c = {
+          .literal = lexer->data + start,
+          .len = lexer->pos - start,
+      },
   };
 
   return LEX_OK;
 }
 
-lexer_error_t read_str(lexer_t *lexer, token_t *token)
+typedef struct
 {
-  if (lexer == NULL || token == NULL)
-    return LEX_INVALID_INPUT;
+  token_t *items;
+  size_t count;
+  size_t capacity;
+} string_parts_t;
 
-  if (lexer->data == NULL)
-    return LEX_INVALID_INPUT;
-
-  if (LEX_CURRENT_UCHAR(lexer) != '"')
-    return LEX_UNEXPECTED_CHAR;
-
-  size_t src_len = strlen(lexer->data);
-
-  size_t start = lexer->pos;
-  lexer->pos++; // ignore "
-
-  static const char *keys[] = {
-      "\\{",
-      "\\}",
-      "\\n",
-      "\\r",
-      "\\t",
-      "\\\"",
-      "\\\\",
-  };
-
-  bool has_interpolation = false;
-
-  while (lexer->data[lexer->pos] != '\0')
+static lexer_error_t append_part(string_parts_t *parts, token_t part)
+{
+  if (parts->count == parts->capacity)
   {
+    size_t max_capacity = SIZE_MAX / sizeof *parts->items;
+    size_t capacity = parts->capacity;
+    if (capacity == max_capacity)
+      return LEX_OUT_OF_MEMORY;
+    capacity = capacity == 0 ? 24 :
+        (capacity > max_capacity / 2 ? max_capacity : capacity * 2);
 
-    size_t step = 1;
+    token_t *items = realloc(parts->items, capacity * sizeof *items);
+    if (items == NULL)
+      return LEX_OUT_OF_MEMORY;
+    parts->items = items;
+    parts->capacity = capacity;
+  }
+  parts->items[parts->count++] = part;
+  return LEX_OK;
+}
 
-    for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
+static lexer_error_t append_text(lexer_t *lexer, string_parts_t *parts,
+                                 size_t start)
+{
+  return append_part(parts, (token_t){
+      .type = TOKEN_STRING,
+      .data.c = {
+          .literal = lexer->data + start,
+          .len = lexer->pos - start,
+      },
+  });
+}
+
+static lexer_error_t read_str_parts(lexer_t *lexer, string_parts_t *parts,
+                                    size_t depth);
+
+static lexer_error_t read_interpolation(lexer_t *lexer, string_parts_t *parts,
+                                        size_t depth)
+{
+  lexer->pos++; // Only skip the opening interpolation brace.
+  size_t braces = 1;
+  while (braces > 0)
+  {
+    while (isspace(LEX_CURRENT_UCHAR(lexer)))
+      lexer->pos++;
+    if (LEX_CURRENT_UCHAR(lexer) == '\0')
+      return LEX_UNTERMINATED_STRING;
+
+    lexer_error_t err;
+    if (LEX_CURRENT_UCHAR(lexer) == '"')
     {
-      size_t len = strlen(keys[i]);
-
-      if (strncmp(lexer->data + lexer->pos, keys[i], len) == 0)
-      {
-        printf("%s %zu\n", keys[i], len);
-        step = len;
-        break;
-      }
-    }
-
-    if (step != 1)
-    {
-      lexer->pos += step;
+      // Nested string text goes into the same flat array, not through read_ident.
+      err = read_str_parts(lexer, parts, depth + 1);
+      if (err != LEX_OK)
+        return err;
       continue;
     }
 
-    if (lexer->data[lexer->pos] == '{')
-    {
-      has_interpolation = true;
+    token_t part;
+    err = next_token(lexer, &part);
+    if (err != LEX_OK)
+      return err;
 
-      size_t brace_count = 1;
+    if (part.type == TOKEN_LBRACE)
+      braces++;
+    else if (part.type == TOKEN_RBRACE && --braces == 0)
+      break; // The outer interpolation brace is not a result token.
 
-      while (brace_count > 0 && lexer->data[lexer->pos] != '\0')
-      {
-
-        token_t tmp;
-        lexer_error_t err;
-        if ((err = next_token(lexer, &tmp)) != LEX_OK)
-        {
-          return err;
-        }
-
-        if (tmp.type == TOKEN_LBRACE)
-        {
-          brace_count++;
-        }
-        else if (tmp.type == TOKEN_RBRACE)
-        {
-          brace_count--;
-          if (brace_count == 0)
-          {
-            break;
-          }
-        }
-
-        printf("%.*s", (int)tmp.len, tmp.literal);
-      }
-    }
-
-    lexer->pos += step;
-
-    if (lexer->pos >= src_len || lexer->data[lexer->pos] == '"')
-    {
-      break;
-    }
+    err = append_part(parts, part);
+    if (err != LEX_OK)
+      return err;
   }
+  return LEX_OK;
+}
 
-  if (lexer->data[lexer->pos] != '"')
+static lexer_error_t read_str_parts(lexer_t *lexer, string_parts_t *parts,
+                                    size_t depth)
+{
+  // Reject excessive nesting rather than overflowing the C call stack.
+  if (depth >= 128)
+    return LEX_INVALID_INPUT;
+
+  lexer->pos++; // Opening quote.
+  size_t text_start = lexer->pos;
+  bool has_interpolation = false;
+
+  for (;;)
   {
-    *token = (token_t){
-        .type = TOKEN_ILEGALL,
-        .literal = lexer->data + start,
-        .len = lexer->pos - start,
-    };
+    unsigned char ch = LEX_CURRENT_UCHAR(lexer);
+    if (ch == '\0')
+      return LEX_UNTERMINATED_STRING;
 
-    return LEX_UNTERMINATED_STRING;
+    // Keep raw escape bytes in the text slice. Escaped quotes/braces are text.
+    if (ch == '\\' && lexer->data[lexer->pos + 1] != '\0' &&
+        strchr("{}nrt\"\\", lexer->data[lexer->pos + 1]) != NULL)
+    {
+      lexer->pos += 2;
+      continue;
+    }
+
+    if (ch == '"')
+    {
+      // A plain empty string still produces one TOKEN_STRING of length zero.
+      if (lexer->pos > text_start || !has_interpolation)
+      {
+        lexer_error_t err = append_text(lexer, parts, text_start);
+        if (err != LEX_OK)
+          return err;
+      }
+      lexer->pos++;
+      return LEX_OK;
+    }
+
+    if (ch == '{')
+    {
+      if (lexer->pos > text_start)
+      {
+        lexer_error_t err = append_text(lexer, parts, text_start);
+        if (err != LEX_OK)
+          return err;
+      }
+      has_interpolation = true;
+      lexer_error_t err = read_interpolation(lexer, parts, depth);
+      if (err != LEX_OK)
+        return err;
+      text_start = lexer->pos;
+      continue;
+    }
+
+    lexer->pos++;
   }
+}
 
-  lexer->pos++;
+void free_token(token_t *token)
+{
+  if (token == NULL)
+    return;
+  if (token->type == TOKEN_STRING_FORMAT)
+    free(token->data.d.t);
+  *token = (token_t){.type = TOKEN_EOF};
+}
 
+lexer_error_t read_str(lexer_t *lexer, token_t *token)
+{
+  if (token == NULL)
+    return LEX_INVALID_INPUT;
+  // The output may be uninitialized. Only the caller releases previous results.
+  *token = (token_t){.type = TOKEN_ILEGALL};
+  if (lexer == NULL || lexer->data == NULL)
+    return LEX_INVALID_INPUT;
+  if (LEX_CURRENT_UCHAR(lexer) != '"')
+    return LEX_UNEXPECTED_CHAR;
+
+  size_t start = lexer->pos;
+  string_parts_t parts = {0};
+  lexer_error_t err = read_str_parts(lexer, &parts, 0);
+  if (err != LEX_OK)
+  {
+    free(parts.items);
+    token->data.c.literal = lexer->data + start;
+    token->data.c.len = lexer->pos - start;
+    return err;
+  }
   *token = (token_t){
-      .type = TOKEN_STRING,
-      .literal = lexer->data + start,
-      .len = lexer->pos - start,
+      .type = TOKEN_STRING_FORMAT,
+      .data.d = {.t = parts.items, .count = parts.count},
   };
-
   return LEX_OK;
 }
 
@@ -307,9 +376,10 @@ lexer_error_t read_keyword(lexer_t *lexer, token_t *token)
     {
       *token = (token_t){
           .type = symbols[i].type,
-          .literal = lexer->data + lexer->pos,
-          .len = len,
-      };
+          .data.c = {
+              .literal = lexer->data + lexer->pos,
+              .len = len,
+          }};
 
       lexer->pos += len;
       return LEX_OK;
@@ -320,6 +390,8 @@ lexer_error_t read_keyword(lexer_t *lexer, token_t *token)
   if (error != LEX_OK)
     return error;
 
-  token->type = ident_type(token->literal, token->len);
+  token->type = ident_type(
+      token->data.c.literal,
+      token->data.c.len);
   return LEX_OK;
 }

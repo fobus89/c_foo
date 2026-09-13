@@ -34,6 +34,7 @@ typedef enum
     TOKEN_NUMBER,
     TOKEN_IDENT,
     TOKEN_STRING,
+    TOKEN_STRING_FORMAT,
     TOKEN_IF,
     TOKEN_ELSE,
     TOKEN_WHILE,
@@ -62,12 +63,30 @@ typedef struct
     char *data;
 } lexer_t;
 
-typedef struct
+typedef struct token token_t;
+
+struct token
 {
     typetype_t type;
-    const char *literal;
-    size_t len;
-} token_t;
+
+    union
+    {
+        double a;
+        long long b;
+
+        struct
+        {
+            const char *literal;
+            size_t len;
+        } c;
+
+        struct
+        {
+            token_t *t;
+            size_t count;
+        } d;
+    } data;
+};
 
 typedef struct
 {
@@ -118,41 +137,10 @@ lexer_error_t next_token(lexer_t *, token_t *);
 lexer_error_t read_number(lexer_t *, token_t *);
 lexer_error_t free_lexer(lexer_t *);
 lexer_error_t read_ident(lexer_t *, token_t *);
+// Produces a flat TOKEN_STRING_FORMAT array without boundary markers.
+// Text (including raw escapes) uses TOKEN_STRING and borrows lexer->data.
+// Nested strings append to that same array. Nesting is limited to 128 levels.
 lexer_error_t read_str(lexer_t *, token_t *);
+// Release a result before reusing its output variable; do not free text slices.
+void free_token(token_t *);
 lexer_error_t read_keyword(lexer_t *, token_t *);
-
-// typedef struct
-// {
-//     enum
-//     {
-//         PART_TEXT,
-//         PART_EXPR
-//     } kind;
-
-//     const char *text;
-//     size_t text_len;
-
-//     token_t *tokens;
-//     size_t token_count;
-// } string_part_t;
-
-// typedef struct string_part string_part_t;
-
-// typedef struct
-// {
-//     typetype_t type;
-
-//     const char *literal;
-//     size_t len;
-
-//     union
-//     {
-//         double number;
-
-//         struct
-//         {
-//             string_part_t *parts;
-//             size_t count;
-//         } string;
-//     } value;
-// } token_t;

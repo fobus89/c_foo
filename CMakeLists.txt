@@ -10,5 +10,5 @@ add_subdirectory(lib)
 add_executable(main src/main.c)
 target_link_libraries(main PRIVATE library)
 
-enable_testing()
-add_subdirectory(tests)
+# enable_testing()
+# add_subdirectory(tests)

@@ -23,9 +23,9 @@ static void test_number_at_end(void)
     token_t token = {0};
     CHECK(next_token(lexer, &token) == LEX_OK);
     CHECK(token.type == TOKEN_NUMBER);
-    CHECK(token.len == 3);
-    CHECK(token.literal != NULL);
-    CHECK(memcmp(token.literal, "123", token.len) == 0);
+    CHECK(token.data.c.len == 3);
+    CHECK(token.data.c.literal != NULL);
+    CHECK(memcmp(token.data.c.literal, "123", token.data.c.len) == 0);
 
     free_lexer(lexer);
 }
@@ -38,9 +38,9 @@ static void test_invalid_number(void)
     token_t token = {0};
     CHECK(next_token(lexer, &token) == LEX_INVALID_NUMBER);
     CHECK(token.type == TOKEN_ILEGALL);
-    CHECK(token.len == 6);
-    CHECK(token.literal != NULL);
-    CHECK(memcmp(token.literal, "123abc", token.len) == 0);
+    CHECK(token.data.c.len == 6);
+    CHECK(token.data.c.literal != NULL);
+    CHECK(memcmp(token.data.c.literal, "123abc", token.data.c.len) == 0);
 
     free_lexer(lexer);
 }

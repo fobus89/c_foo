@@ -32,9 +32,9 @@ static void check_sequence(const char *input,
         size_t previous_pos = lexer->pos;
         CHECK(next_token(lexer, &token) == LEX_OK);
         CHECK(token.type == expected[i].type);
-        CHECK(token.len == strlen(expected[i].literal));
-        CHECK(token.literal != NULL);
-        CHECK(memcmp(token.literal, expected[i].literal, token.len) == 0);
+        CHECK(token.data.c.len == strlen(expected[i].literal));
+        CHECK(token.data.c.literal != NULL);
+        CHECK(memcmp(token.data.c.literal, expected[i].literal, token.data.c.len) == 0);
         CHECK(lexer->pos > previous_pos);
     }
 

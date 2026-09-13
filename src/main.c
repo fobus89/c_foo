@@ -16,6 +16,7 @@ static inline const char *token_type_to_string(typetype_t type)
     TOKEN_TYPE_CASE(TOKEN_NUMBER);
     TOKEN_TYPE_CASE(TOKEN_IDENT);
     TOKEN_TYPE_CASE(TOKEN_STRING);
+    TOKEN_TYPE_CASE(TOKEN_STRING_FORMAT);
     TOKEN_TYPE_CASE(TOKEN_IF);
     TOKEN_TYPE_CASE(TOKEN_ELSE);
     TOKEN_TYPE_CASE(TOKEN_WHILE);
@@ -42,6 +43,22 @@ static inline const char *token_type_to_string(typetype_t type)
 }
 
 #undef TOKEN_TYPE_CASE
+
+static void print_token(const token_t *tok)
+{
+  if (tok->type == TOKEN_STRING_FORMAT)
+  {
+    for (size_t i = 0; i < tok->data.d.count; i++)
+      print_token(&tok->data.d.t[i]);
+
+    return;
+  }
+
+  printf("%s -> %.*s\n",
+         token_type_to_string(tok->type),
+         (int)tok->data.c.len,
+         tok->data.c.literal);
+}
 
 int read_file(const char *name, char **out)
 {
@@ -100,22 +117,22 @@ int main(void)
     return 1;
   }
 
-  lexer_t *lex;
+  lexer_t *lex = NULL;
+  lexer_error_t err = new_lexer(data, &lex);
+  free(data);
+  if (err != LEX_OK)
+    return EXIT_FAILURE;
 
-  if (LEX_OK != new_lexer(data, &lex))
+  token_t tok = {0};
+  while ((err = next_token(lex, &tok)) == LEX_OK)
   {
-    return 1;
+    print_token(&tok);
+    free_token(&tok);
   }
 
-  token_t tok;
-
-  while (next_token(lex, &tok) == LEX_OK)
-  {
-    // printf("%s -> %.*s\n", token_type_to_string(tok.type), (int)tok.len, tok.literal);
-  }
-
-  // printf()
-  // memcmp()
-
-  // printf("%.*s", (int)out->length, out->literal); // выведет 123
+  if (err != LEX_EOF)
+    fprintf(stderr, "Lexer error %d at byte %zu\n", (int)err, lex->pos);
+  free_token(&tok);
+  free_lexer(lex);
+  return err == LEX_EOF ? EXIT_SUCCESS : EXIT_FAILURE;
 }

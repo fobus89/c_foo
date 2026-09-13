@@ -17,9 +17,9 @@
 static void check_ident(const token_t *token, const char *expected)
 {
     CHECK(token->type == TOKEN_IDENT);
-    CHECK(token->len == strlen(expected));
-    CHECK(token->literal != NULL);
-    CHECK(memcmp(token->literal, expected, token->len) == 0);
+    CHECK(token->data.c.len == strlen(expected));
+    CHECK(token->data.c.literal != NULL);
+    CHECK(memcmp(token->data.c.literal, expected, token->data.c.len) == 0);
 }
 
 static void test_ident_at_end(void)
@@ -69,9 +69,9 @@ static void test_read_ident(void)
     CHECK(lexer->pos == 4);
     CHECK(next_token(lexer, &token) == LEX_OK);
     CHECK(token.type == TOKEN_BANG);
-    CHECK(token.len == 1);
-    CHECK(token.literal != NULL);
-    CHECK(token.literal[0] == '!');
+    CHECK(token.data.c.len == 1);
+    CHECK(token.data.c.literal != NULL);
+    CHECK(token.data.c.literal[0] == '!');
     CHECK(lexer->pos == 5);
     CHECK(next_token(lexer, &token) == LEX_EOF);
     CHECK(token.type == TOKEN_EOF);

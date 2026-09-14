@@ -1,4 +1,4 @@
 hello
 123
-"\nhello"
+"\nhello\t\\ {1+2}"
 

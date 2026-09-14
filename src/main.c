@@ -1,7 +1,7 @@
 #include "library.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define TOKEN_TYPE_CASE(type) \
   case type:                  \
@@ -54,10 +54,8 @@ static void print_token(const token_t *tok)
     return;
   }
 
-  printf("%s -> %.*s\n",
-         token_type_to_string(tok->type),
-         (int)tok->data.c.len,
-         tok->data.c.literal);
+  printf("%s -> '%.*s'\n", token_type_to_string(tok->type),
+         (int)tok->data.c.len, tok->data.c.literal);
 }
 
 int read_file(const char *name, char **out)
@@ -107,9 +105,22 @@ int read_file(const char *name, char **out)
   return 0;
 }
 
+void add(int *restrict a, int *restrict b)
+{
+  *a += *b;
+}
+
 int main(void)
 {
 
+  float a = 5;
+  int b = 0;
+
+  memcpy(&b, &a, sizeof(int));
+
+  printf("%f %d \n", a, b);
+
+  return 0;
   char *data = NULL;
 
   if (read_file("test.txt", &data) != 0)

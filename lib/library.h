@@ -6,16 +6,19 @@
 
 #define LEN(x) sizeof(x) / sizeof(x[0])
 
-#define LEX_NULL_CHECK(x, ...)                                                 \
-  do {                                                                         \
-    if (unlikely((x) == NULL)) {                                               \
-      __VA_ARGS__;                                                             \
-    }                                                                          \
+#define LEX_NULL_CHECK(x, ...) \
+  do                           \
+  {                            \
+    if (unlikely((x) == NULL)) \
+    {                          \
+      __VA_ARGS__;             \
+    }                          \
   } while (0)
 
 #define LEX_CURRENT_UCHAR(lexer) ((unsigned char)((lexer)->data[(lexer)->pos]))
 
-typedef enum {
+typedef enum
+{
   LEX_OK = 0,
   LEX_EOF,
   LEX_INVALID_INPUT,       // lexer или token == NULL
@@ -25,7 +28,8 @@ typedef enum {
   LEX_INVALID_NUMBER       // неправильный формат числа
 } lexer_error_t;
 
-typedef enum {
+typedef enum
+{
   TOKEN_EOF,
   TOKEN_ILEGALL,
   TOKEN_NUMBER,
@@ -54,33 +58,39 @@ typedef enum {
   TOKEN_RPAREN,
 } typetype_t;
 
-typedef struct {
+typedef struct
+{
   size_t pos;
   char *data;
 } lexer_t;
 
 typedef struct token token_t;
 
-struct token {
+struct token
+{
   typetype_t type;
 
-  union {
+  union
+  {
     double a;
     long long b;
 
-    struct {
+    struct
+    {
       const char *literal;
       size_t len;
     } c;
 
-    struct {
+    struct
+    {
       token_t *t;
       size_t count;
     } d;
   } data;
 };
 
-typedef struct {
+typedef struct
+{
   const char *word;
   size_t len;
   typetype_t type;
@@ -88,13 +98,16 @@ typedef struct {
 
 #define KEYWORD(word, type) {word, sizeof(word) - 1, type}
 static const keyword_t keywords[] = {
-    KEYWORD("if", TOKEN_IF),       KEYWORD("else", TOKEN_ELSE),
-    KEYWORD("while", TOKEN_WHILE), KEYWORD("return", TOKEN_RETURN),
+    KEYWORD("if", TOKEN_IF),
+    KEYWORD("else", TOKEN_ELSE),
+    KEYWORD("while", TOKEN_WHILE),
+    KEYWORD("return", TOKEN_RETURN),
     KEYWORD("for", TOKEN_FOR),
 };
 #undef KEYWORD
 
-typedef struct {
+typedef struct
+{
   const char *word;
   size_t len;
   typetype_t type;
@@ -102,13 +115,20 @@ typedef struct {
 
 #define SYMBOL(word, type) {word, sizeof(word) - 1, type}
 static const symbol_t symbols[] = {
-    SYMBOL("++", TOKEN_PLUS_PLUS), SYMBOL("--", TOKEN_MINUS_MINUS),
-    SYMBOL("**", TOKEN_MULT_MULT), SYMBOL("//", TOKEN_DIV_DIV),
-    SYMBOL("==", TOKEN_EQ_EQ),     SYMBOL("!", TOKEN_BANG),
-    SYMBOL("+", TOKEN_PLUS),       SYMBOL("-", TOKEN_MINUS),
-    SYMBOL("*", TOKEN_MULT),       SYMBOL("/", TOKEN_DIV),
-    SYMBOL("=", TOKEN_EQ),         SYMBOL("{", TOKEN_LBRACE),
-    SYMBOL("}", TOKEN_RBRACE),     SYMBOL("(", TOKEN_LPAREN),
+    SYMBOL("++", TOKEN_PLUS_PLUS),
+    SYMBOL("--", TOKEN_MINUS_MINUS),
+    SYMBOL("**", TOKEN_MULT_MULT),
+    SYMBOL("//", TOKEN_DIV_DIV),
+    SYMBOL("==", TOKEN_EQ_EQ),
+    SYMBOL("!", TOKEN_BANG),
+    SYMBOL("+", TOKEN_PLUS),
+    SYMBOL("-", TOKEN_MINUS),
+    SYMBOL("*", TOKEN_MULT),
+    SYMBOL("/", TOKEN_DIV),
+    SYMBOL("=", TOKEN_EQ),
+    SYMBOL("{", TOKEN_LBRACE),
+    SYMBOL("}", TOKEN_RBRACE),
+    SYMBOL("(", TOKEN_LPAREN),
     SYMBOL(")", TOKEN_RPAREN),
 };
 #undef SYMBOL
@@ -125,3 +145,44 @@ lexer_error_t read_str(lexer_t *, token_t *);
 // Release a result before reusing its output variable; do not free text slices.
 void free_token(token_t *);
 lexer_error_t read_keyword(lexer_t *, token_t *);
+
+#define TOKEN_TYPE_CASE(type) \
+  case type:                  \
+    return #type
+
+inline const char *token_type_to_string(typetype_t type)
+{
+  switch (type)
+  {
+    TOKEN_TYPE_CASE(TOKEN_EOF);
+    TOKEN_TYPE_CASE(TOKEN_ILEGALL);
+    TOKEN_TYPE_CASE(TOKEN_NUMBER);
+    TOKEN_TYPE_CASE(TOKEN_IDENT);
+    TOKEN_TYPE_CASE(TOKEN_STRING);
+    TOKEN_TYPE_CASE(TOKEN_STRING_FORMAT);
+    TOKEN_TYPE_CASE(TOKEN_IF);
+    TOKEN_TYPE_CASE(TOKEN_ELSE);
+    TOKEN_TYPE_CASE(TOKEN_WHILE);
+    TOKEN_TYPE_CASE(TOKEN_RETURN);
+    TOKEN_TYPE_CASE(TOKEN_FOR);
+    TOKEN_TYPE_CASE(TOKEN_BANG);
+    TOKEN_TYPE_CASE(TOKEN_PLUS_PLUS);
+    TOKEN_TYPE_CASE(TOKEN_MINUS_MINUS);
+    TOKEN_TYPE_CASE(TOKEN_MULT_MULT);
+    TOKEN_TYPE_CASE(TOKEN_DIV_DIV);
+    TOKEN_TYPE_CASE(TOKEN_PLUS);
+    TOKEN_TYPE_CASE(TOKEN_MINUS);
+    TOKEN_TYPE_CASE(TOKEN_MULT);
+    TOKEN_TYPE_CASE(TOKEN_DIV);
+    TOKEN_TYPE_CASE(TOKEN_EQ);
+    TOKEN_TYPE_CASE(TOKEN_EQ_EQ);
+    TOKEN_TYPE_CASE(TOKEN_LBRACE);
+    TOKEN_TYPE_CASE(TOKEN_RBRACE);
+    TOKEN_TYPE_CASE(TOKEN_LPAREN);
+    TOKEN_TYPE_CASE(TOKEN_RPAREN);
+  default:
+    return "TOKEN_UNKNOWN";
+  }
+}
+
+#undef TOKEN_TYPE_CASE

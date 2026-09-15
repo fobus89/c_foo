@@ -1,0 +1,42 @@
+#include "token.h"
+
+#define TOKEN_TYPE_CASE(type) \
+    case type:                \
+        return #type
+
+const char *token_type_to_string(token_type_t type)
+{
+    switch (type)
+    {
+        TOKEN_TYPE_CASE(TOKEN_EOF);
+        TOKEN_TYPE_CASE(TOKEN_ILEGALL);
+        TOKEN_TYPE_CASE(TOKEN_NUMBER);
+        TOKEN_TYPE_CASE(TOKEN_IDENT);
+        TOKEN_TYPE_CASE(TOKEN_STRING);
+        TOKEN_TYPE_CASE(TOKEN_STRING_FORMAT);
+        TOKEN_TYPE_CASE(TOKEN_IF);
+        TOKEN_TYPE_CASE(TOKEN_ELSE);
+        TOKEN_TYPE_CASE(TOKEN_WHILE);
+        TOKEN_TYPE_CASE(TOKEN_RETURN);
+        TOKEN_TYPE_CASE(TOKEN_FOR);
+        TOKEN_TYPE_CASE(TOKEN_BANG);
+        TOKEN_TYPE_CASE(TOKEN_PLUS_PLUS);
+        TOKEN_TYPE_CASE(TOKEN_MINUS_MINUS);
+        TOKEN_TYPE_CASE(TOKEN_MULT_MULT);
+        TOKEN_TYPE_CASE(TOKEN_DIV_DIV);
+        TOKEN_TYPE_CASE(TOKEN_PLUS);
+        TOKEN_TYPE_CASE(TOKEN_MINUS);
+        TOKEN_TYPE_CASE(TOKEN_MULT);
+        TOKEN_TYPE_CASE(TOKEN_DIV);
+        TOKEN_TYPE_CASE(TOKEN_EQ);
+        TOKEN_TYPE_CASE(TOKEN_EQ_EQ);
+        TOKEN_TYPE_CASE(TOKEN_LBRACE);
+        TOKEN_TYPE_CASE(TOKEN_RBRACE);
+        TOKEN_TYPE_CASE(TOKEN_LPAREN);
+        TOKEN_TYPE_CASE(TOKEN_RPAREN);
+    default:
+        return "TOKEN_UNKNOWN";
+    }
+}
+
+#undef TOKEN_TYPE_CASE

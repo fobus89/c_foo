@@ -5,10 +5,10 @@ project(lesson C)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_subdirectory(lib)
+add_subdirectory(parser)
 
 add_executable(main src/main.c)
-target_link_libraries(main PRIVATE library)
+target_link_libraries(main PRIVATE parser)
 
 # enable_testing()
 # add_subdirectory(tests)

@@ -1,48 +1,11 @@
-#include "library.h"
+#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define TOKEN_TYPE_CASE(type) \
-  case type:                  \
-    return #type
-
-static inline const char *token_type_to_string(typetype_t type)
+void free_token(token_t *)
 {
-  switch (type)
-  {
-    TOKEN_TYPE_CASE(TOKEN_EOF);
-    TOKEN_TYPE_CASE(TOKEN_ILEGALL);
-    TOKEN_TYPE_CASE(TOKEN_NUMBER);
-    TOKEN_TYPE_CASE(TOKEN_IDENT);
-    TOKEN_TYPE_CASE(TOKEN_STRING);
-    TOKEN_TYPE_CASE(TOKEN_STRING_FORMAT);
-    TOKEN_TYPE_CASE(TOKEN_IF);
-    TOKEN_TYPE_CASE(TOKEN_ELSE);
-    TOKEN_TYPE_CASE(TOKEN_WHILE);
-    TOKEN_TYPE_CASE(TOKEN_RETURN);
-    TOKEN_TYPE_CASE(TOKEN_FOR);
-    TOKEN_TYPE_CASE(TOKEN_BANG);
-    TOKEN_TYPE_CASE(TOKEN_PLUS_PLUS);
-    TOKEN_TYPE_CASE(TOKEN_MINUS_MINUS);
-    TOKEN_TYPE_CASE(TOKEN_MULT_MULT);
-    TOKEN_TYPE_CASE(TOKEN_DIV_DIV);
-    TOKEN_TYPE_CASE(TOKEN_PLUS);
-    TOKEN_TYPE_CASE(TOKEN_MINUS);
-    TOKEN_TYPE_CASE(TOKEN_MULT);
-    TOKEN_TYPE_CASE(TOKEN_DIV);
-    TOKEN_TYPE_CASE(TOKEN_EQ);
-    TOKEN_TYPE_CASE(TOKEN_EQ_EQ);
-    TOKEN_TYPE_CASE(TOKEN_LBRACE);
-    TOKEN_TYPE_CASE(TOKEN_RBRACE);
-    TOKEN_TYPE_CASE(TOKEN_LPAREN);
-    TOKEN_TYPE_CASE(TOKEN_RPAREN);
-  default:
-    return "TOKEN_UNKNOWN";
-  }
 }
-
-#undef TOKEN_TYPE_CASE
 
 static void print_token(const token_t *tok)
 {
@@ -105,22 +68,9 @@ int read_file(const char *name, char **out)
   return 0;
 }
 
-void add(int *restrict a, int *restrict b)
-{
-  *a += *b;
-}
-
 int main(void)
 {
 
-  float a = 5;
-  int b = 0;
-
-  memcpy(&b, &a, sizeof(int));
-
-  printf("%f %d \n", a, b);
-
-  return 0;
   char *data = NULL;
 
   if (read_file("test.txt", &data) != 0)
@@ -137,12 +87,17 @@ int main(void)
   token_t tok = {0};
   while ((err = next_token(lex, &tok)) == LEX_OK)
   {
-    print_token(&tok);
-    free_token(&tok);
+
+    printf("%s -> '%.*s'\n", token_type_to_string(tok.type),
+           (int)tok.data.c.len, tok.data.c.literal);
+
+    // print_token(&tok);
+    // free_token(&tok);
   }
 
   if (err != LEX_EOF)
-    fprintf(stderr, "Lexer error %d at byte %zu\n", (int)err, lex->pos);
+    fprintf(stderr, "Lexer error %d at byte %zu %s\n", (int)err, lex->pos, lex_err_to_string(err));
+
   free_token(&tok);
   free_lexer(lex);
   return err == LEX_EOF ? EXIT_SUCCESS : EXIT_FAILURE;

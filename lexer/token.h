@@ -5,7 +5,7 @@
 
 typedef enum
 {
-    TOKEN_EOF,
+    TOKEN_EOF = 0,
     TOKEN_ILEGALL,
     TOKEN_NUMBER,
     TOKEN_IDENT,
@@ -31,6 +31,7 @@ typedef enum
     TOKEN_RBRACE,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
+    TOKEN_COUNT,
 } token_type_t;
 
 typedef struct token token_t;

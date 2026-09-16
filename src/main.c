@@ -1,25 +1,10 @@
-#include "lexer.h"
+#include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void free_token(token_t *)
-{
-}
-
-static void print_token(const token_t *tok)
-{
-  if (tok->type == TOKEN_STRING_FORMAT)
-  {
-    for (size_t i = 0; i < tok->data.d.count; i++)
-      print_token(&tok->data.d.t[i]);
-
-    return;
-  }
-
-  printf("%s -> '%.*s'\n", token_type_to_string(tok->type),
-         (int)tok->data.c.len, tok->data.c.literal);
-}
+#include <stdint.h>
+#include <inttypes.h>
 
 int read_file(const char *name, char **out)
 {
@@ -68,6 +53,24 @@ int read_file(const char *name, char **out)
   return 0;
 }
 
+expr_t nud_int_literal(parser_t *p)
+{
+  token_t token = p->tokes[p->pos];
+  p->pos++;
+
+  int64_t number = 0;
+
+  for (size_t i = 0; i < token.data.c.len; i++)
+  {
+    number = number * 10 + (token.data.c.literal[i] - '0');
+  }
+
+  return (expr_t){
+      .kind = EXPR_NUMBER,
+      .data = (void *)number,
+  };
+}
+
 int main(void)
 {
 
@@ -78,27 +81,27 @@ int main(void)
     return 1;
   }
 
-  lexer_t *lex = NULL;
-  lexer_error_t err = new_lexer(data, &lex);
+  parser_t *parser = new_parser(data);
   free(data);
-  if (err != LEX_OK)
-    return EXIT_FAILURE;
 
-  token_t tok = {0};
-  while ((err = next_token(lex, &tok)) == LEX_OK)
+  nud_register(parser, TOKEN_NUMBER, nud_int_literal);
+
+  expr_t expr;
+
+  while ((expr = parse_stmt(parser)).kind != EXPR_INVALID)
   {
-
-    printf("%s -> '%.*s'\n", token_type_to_string(tok.type),
-           (int)tok.data.c.len, tok.data.c.literal);
-
-    // print_token(&tok);
-    // free_token(&tok);
+    printf("%" PRIdPTR "\n", (intptr_t)expr.data);
   }
 
-  if (err != LEX_EOF)
-    fprintf(stderr, "Lexer error %d at byte %zu %s\n", (int)err, lex->pos, lex_err_to_string(err));
+  // while ((err = next_token(lex, &tok)) == LEX_OK)
+  // {
 
-  free_token(&tok);
-  free_lexer(lex);
-  return err == LEX_EOF ? EXIT_SUCCESS : EXIT_FAILURE;
+  //   printf("%s -> '%.*s'\n", token_type_to_string(tok.type),
+  //          (int)tok.data.c.len, tok.data.c.literal);
+
+  //   // print_token(&tok);
+  //   // free_token(&tok);
+  // }
+
+  return EXIT_SUCCESS;
 }

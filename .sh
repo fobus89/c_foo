@@ -1,0 +1,25 @@
+runai workspace submit jupytertraslite \
+  -p asr-test-131 \
+  -i nvcr.io/nvidia/pytorch:25.06-py3 \
+  --run-as-uid 0 \
+  --run-as-gid 0 \
+  --gpu-request-type memory \
+  --gpu-memory-request 64Gi \
+  --gpu-memory-limit 64Gi \
+  --cpu-core-request 8 \
+  --cpu-core-limit 16 \
+  --cpu-memory-request 128Gi \
+  --cpu-memory-limit 128Gi \
+  --large-shm \
+  --existing-pvc claimname=tdtctc110mq5k-project-2r200,path=/models \
+  --existing-pvc claimname=data-project-fjxfi,path=/data \
+  --external-url container=8889 \
+  --command -- \
+  jupyter-lab \
+    --ServerApp.base_url=/asr-test-131/jupytertraslite \
+    --ServerApp.token= \
+    --ServerApp.allow_remote_access=true \
+    --ServerApp.allow_root=true \
+    --ServerApp.disable_check_xsrf=true \
+    --ServerApp.port=8889 \
+    --no-browser

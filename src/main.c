@@ -77,6 +77,17 @@ expr_t nud_int_literal(parser_t *p)
   };
 }
 
+expr_t nud_ident_literal(parser_t *p)
+{
+  token_t *token = &p->tokes[p->pos];
+  p->pos++;
+
+  return (expr_t){
+      .kind = EXPR_IDENT,
+      .data = (void *)token,
+  };
+}
+
 int main(void)
 {
 
@@ -91,12 +102,23 @@ int main(void)
   free(data);
 
   nud_register(parser, TOKEN_NUMBER, nud_int_literal);
+  nud_register(parser, TOKEN_IDENT, nud_ident_literal);
 
   expr_t expr;
 
   while ((expr = parse_stmt(parser)).kind != EXPR_INVALID)
   {
-    // printf("%" PRIdPTR "\n", (intptr_t)expr.data);
+
+    switch (expr.kind)
+    {
+    case EXPR_NUMBER:
+      printf("%" PRIdPTR "\n", (intptr_t)expr.data);
+      break;
+    case EXPR_IDENT:
+      token_t *token = expr.data;
+      printf("%.*s\n", (int)token->data.c.len, token->data.c.literal);
+      break;
+    }
   }
 
   // while ((err = next_token(lex, &tok)) == LEX_OK)

@@ -65,6 +65,12 @@ expr_t nud_int_literal(parser_t *p)
     number = number * 10 + (token.data.c.literal[i] - '0');
   }
 
+  char a[token.data.c.len + 1];
+  memcpy(a, token.data.c.literal, token.data.c.len);
+  a[token.data.c.len] = '\0';
+
+  printf("%s\n", a);
+
   return (expr_t){
       .kind = EXPR_NUMBER,
       .data = (void *)number,
@@ -90,7 +96,7 @@ int main(void)
 
   while ((expr = parse_stmt(parser)).kind != EXPR_INVALID)
   {
-    printf("%" PRIdPTR "\n", (intptr_t)expr.data);
+    // printf("%" PRIdPTR "\n", (intptr_t)expr.data);
   }
 
   // while ((err = next_token(lex, &tok)) == LEX_OK)

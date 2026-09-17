@@ -55,7 +55,7 @@ int read_file(const char *name, char **out)
 
 expr_t nud_int_literal(parser_t *p)
 {
-  token_t token = p->tokes[p->pos];
+  token_t token = p->tokens[p->pos];
   p->pos++;
 
   int64_t number = 0;
@@ -72,18 +72,18 @@ expr_t nud_int_literal(parser_t *p)
   printf("%s\n", a);
 
   return (expr_t){
-      .kind = EXPR_NUMBER,
+      .kind = VALUE_INT,
       .data = (void *)number,
   };
 }
 
 expr_t nud_ident_literal(parser_t *p)
 {
-  token_t *token = &p->tokes[p->pos];
+  token_t *token = &p->tokens[p->pos];
   p->pos++;
 
   return (expr_t){
-      .kind = EXPR_IDENT,
+      .kind = VALUE_STRING,
       .data = (void *)token,
   };
 }
@@ -91,6 +91,9 @@ expr_t nud_ident_literal(parser_t *p)
 int main(void)
 {
 
+  struct expr2 ex = {.data = 1, .eval = read_file};
+
+  return 0;
   char *data = NULL;
 
   if (read_file("test.txt", &data) != 0)

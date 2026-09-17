@@ -3,10 +3,21 @@
 typedef struct expr expr_t;
 typedef struct parser parser_t;
 typedef enum binding_power binding_power_t;
+typedef struct expr expr_t;
+typedef struct value value_t;
+typedef enum value_type value_type_t;
+typedef enum expr_kind expr_kind_t;
 
 typedef expr_t (*stmt_handler_type)(parser_t *);
 typedef expr_t (*nud_handler_type)(parser_t *);
 typedef expr_t (*led_handler_type)(parser_t *, expr_t, binding_power_t);
+
+enum value_type
+{
+    VALUE_INT,
+    VALUE_FLOAT,
+    VALUE_STRING
+};
 
 enum binding_power
 {
@@ -25,19 +36,19 @@ enum binding_power
     HIGHEST,
 };
 
-typedef enum expr_kind
+enum expr_kind
 {
     EXPR_INVALID,
     EXPR_NUMBER,
     EXPR_IDENT,
-    EXPR_UNARY,
-    EXPR_BINARY,
-} expr_kind_t;
+    EXPR_STRING,
+};
 
 struct expr
 {
+    const void *data;
     expr_kind_t kind;
-    void *data;
+    value_t (*eval)(const void *data);
 };
 
 struct parser
@@ -45,7 +56,7 @@ struct parser
     lexer_t *lexer;
     size_t pos;
     size_t count;
-    token_t *tokes;
+    token_t *tokens;
     nud_handler_type nud[TOKEN_COUNT];
     led_handler_type led[TOKEN_COUNT];
     stmt_handler_type stmt[TOKEN_COUNT];

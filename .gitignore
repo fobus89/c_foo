@@ -1,1 +1,5 @@
 build
+# GCC по умолчанию
+a.out
+# Windows
+*.exe

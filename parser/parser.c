@@ -110,7 +110,7 @@ expr_t parse_expr(parser_t *p, binding_power_t bp)
 
 const token_type_t current(parser_t *p)
 {
-    const token_t token = p->tokes[p->pos];
+    const token_t token = p->tokens[p->pos];
 
     return token.type;
 }
@@ -124,11 +124,11 @@ parser_t *new_parser(const char *input)
     token_t tok = {0};
     lexer_error_t err;
 
-    token_t *tokes = malloc(sizeof(token_t) * 128);
+    token_t *tokens = malloc(sizeof(token_t) * 128);
     size_t count = 0;
     while ((err = next_token(lex, &tok)) == LEX_OK)
     {
-        tokes[count++] = tok;
+        tokens[count++] = tok;
     }
 
     parser_t *parser = malloc(sizeof(parser_t));
@@ -141,7 +141,7 @@ parser_t *new_parser(const char *input)
         .led = {0},
         .nud = {0},
         .stmt = {0},
-        .tokes = tokes,
+        .tokens = tokens,
     };
 
     return parser;

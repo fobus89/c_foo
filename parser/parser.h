@@ -14,9 +14,11 @@ typedef expr_t (*led_handler_type)(parser_t *, expr_t, binding_power_t);
 
 enum value_type
 {
+    VALUE_NONE,
     VALUE_INT,
     VALUE_FLOAT,
-    VALUE_STRING
+    VALUE_STRING,
+    VALUE_IDENT,
 };
 
 enum binding_power
@@ -40,15 +42,25 @@ enum expr_kind
 {
     EXPR_INVALID,
     EXPR_NUMBER,
+    EXPR_BODY,
+    EXPR_BINARY,
     EXPR_IDENT,
     EXPR_STRING,
+    EXPR_FOR,
+    EXPR_IF,
+};
+
+struct value
+{
+    value_type_t type;
+    const void *data;
 };
 
 struct expr
 {
     const void *data;
     expr_kind_t kind;
-    value_t (*eval)(const void *data);
+    const value_t (*eval)(const void *data);
 };
 
 struct parser

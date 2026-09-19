@@ -3,7 +3,10 @@
 
 #include "stdlib.h"
 
-typedef enum
+typedef struct token token_t;
+typedef enum token_type token_type_t;
+
+enum token_type
 {
     TOKEN_EOF = 0,
     TOKEN_ILEGALL,
@@ -26,37 +29,28 @@ typedef enum
     TOKEN_MULT,
     TOKEN_DIV,
     TOKEN_EQ,
+    TOKEN_GT,
+    TOKEN_LT,
+    TOKEN_GT_EQ,
+    TOKEN_LT_EQ,
     TOKEN_EQ_EQ,
+    TOKEN_BANG_EQ,
+    TOKEN_AMP_AMP,
+    TOKEN_PIPE_PIPE,
+    TOKEN_AND,
+    TOKEN_OR,
     TOKEN_LBRACE,
     TOKEN_RBRACE,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
     TOKEN_COUNT,
-} token_type_t;
-
-typedef struct token token_t;
+};
 
 struct token
 {
     token_type_t type;
-
-    union
-    {
-        double a;
-        long long b;
-
-        struct
-        {
-            const char *literal;
-            size_t len;
-        } c;
-
-        struct
-        {
-            token_t *t;
-            size_t count;
-        } d;
-    } data;
+    const char *literal;
+    size_t literal_len;
 };
 
 const char *token_type_to_string(token_type_t type);

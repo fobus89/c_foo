@@ -1,13 +1,6 @@
 #include "parser.h"
 #include <stdint.h>
 
-typedef struct binary_expr
-{
-    token_type_t op;
-    expr_t *left;
-    expr_t *right;
-} binary_expr_t;
-
 typedef struct number_expr
 {
     int64_t value;
@@ -20,7 +13,7 @@ void nud_register(parser_t *p, token_type_t t, nud_handler_type h)
 
 void stmt_register(parser_t *p, token_type_t t, stmt_handler_type h)
 {
-    p->bp[t] = LOWEST;
+    // p->bp[t] = LOWEST;
     p->stmt[t] = h;
 }
 
@@ -108,7 +101,7 @@ expr_t parse_expr(parser_t *p, binding_power_t bp)
     return left;
 }
 
-const token_type_t current(parser_t *p)
+token_type_t current(parser_t *p)
 {
     const token_t token = p->tokens[p->pos];
 

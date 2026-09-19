@@ -119,12 +119,8 @@ lexer_error_t read_number(lexer_t *lexer, token_t *token)
     {
         *token = (token_t){
             .type = TOKEN_NUMBER,
-            .data = {
-                .c = {
-                    .len = lexer->pos - start,
-                    .literal = lexer->data + start,
-                },
-            },
+            .literal_len = lexer->pos - start,
+            .literal = lexer->data + start,
         };
 
         return LEX_OK;
@@ -138,12 +134,8 @@ lexer_error_t read_number(lexer_t *lexer, token_t *token)
 
     *token = (token_t){
         .type = TOKEN_ILEGALL,
-        .data = {
-            .c = {
-                .len = lexer->pos - start,
-                .literal = lexer->data + start,
-            },
-        },
+        .literal_len = lexer->pos - start,
+        .literal = lexer->data + start,
     };
 
     return LEX_OK;
@@ -172,12 +164,8 @@ lexer_error_t read_ident(lexer_t *lexer, token_t *token)
 
     *token = (token_t){
         .type = TOKEN_IDENT,
-        .data = {
-            .c = {
-                .literal = lexer->data + start,
-                .len = lexer->pos - start,
-            },
-        },
+        .literal = lexer->data + start,
+        .literal_len = lexer->pos - start,
     };
 
     return LEX_OK;
@@ -195,12 +183,8 @@ lexer_error_t read_keyword(lexer_t *lexer, token_t *token)
 
         *token = (token_t){
             .type = symbol.type,
-            .data = {
-                .c = {
-                    .literal = lexer->data + start,
-                    .len = lexer->pos - start,
-                },
-            },
+            .literal = lexer->data + start,
+            .literal_len = lexer->pos - start,
         };
 
         return LEX_OK;
@@ -224,12 +208,8 @@ lexer_error_t read_keyword(lexer_t *lexer, token_t *token)
 
     *token = (token_t){
         .type = keyword.type,
-        .data = {
-            .c = {
-                .literal = lexer->data + start,
-                .len = lexer->pos - start,
-            },
-        },
+        .literal = lexer->data + start,
+        .literal_len = lexer->pos - start,
     };
 
     return LEX_OK;

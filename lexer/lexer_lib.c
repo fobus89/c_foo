@@ -46,6 +46,11 @@ size_t lookup_symbol(const char *literal, symbol_t *symbol)
         SYMBOL("**", TOKEN_MULT_MULT),
         SYMBOL("//", TOKEN_DIV_DIV),
         SYMBOL("==", TOKEN_EQ_EQ),
+        SYMBOL(">=", TOKEN_GT_EQ),
+        SYMBOL("<=", TOKEN_LT_EQ),
+        SYMBOL("!=", TOKEN_BANG_EQ),
+        SYMBOL("&&", TOKEN_AMP_AMP),
+        SYMBOL("||", TOKEN_PIPE_PIPE),
         SYMBOL("!", TOKEN_BANG),
         SYMBOL("+", TOKEN_PLUS),
         SYMBOL("-", TOKEN_MINUS),
@@ -56,6 +61,10 @@ size_t lookup_symbol(const char *literal, symbol_t *symbol)
         SYMBOL("}", TOKEN_RBRACE),
         SYMBOL("(", TOKEN_LPAREN),
         SYMBOL(")", TOKEN_RPAREN),
+        SYMBOL(">", TOKEN_GT),
+        SYMBOL("<", TOKEN_LT),
+        SYMBOL("&", TOKEN_AND),
+        SYMBOL("|", TOKEN_OR),
     };
 #undef SYMBOL
 

@@ -4,6 +4,36 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <assert.h>
+
+#define ccc(x) printf(_Generic((x),            \
+                          int: "%d",           \
+                          double: "%f",        \
+                          char *: "%s",        \
+                          const char *: "%s"), \
+                      (x))
+
+#define APPEND(slice, item)                                                          \
+  do                                                                                 \
+  {                                                                                  \
+    assert((slice) != NULL);                                                         \
+    if (slice->count >= slice->capasity)                                             \
+    {                                                                                \
+      if (slice->capasity == 0)                                                      \
+        slice->capasity = 16;                                                        \
+      else                                                                           \
+        slice->capasity *= 2;                                                        \
+      slice->items = realloc(slice->items, slice->capasity * sizeof(*slice->items)); \
+    }                                                                                \
+    slice->items[slice->count++] = item;                                             \
+  } while (0)
+
+typedef struct conder
+{
+  int *items;
+  size_t count;
+  size_t capasity;
+} conder_t;
 
 typedef struct assign_expr
 {
@@ -19,8 +49,8 @@ typedef struct body_expr
 
 typedef struct if_expr
 {
-  expr_t then;
-  expr_t then_body;
+  expr_t conds[16][2];
+  size_t len;
 } if_expr_t;
 
 typedef struct binary_expr
@@ -53,6 +83,7 @@ static void print_eval(const expr_t expr)
 
 static const value_t eval_body(const void *data)
 {
+
   const body_expr_t *body = data;
   value_t result = {0};
 
@@ -68,16 +99,18 @@ static const value_t eval_if(const void *data)
 {
   const if_expr_t *if_expr = data;
 
-  value_t result = eval(if_expr->then);
-
-  if (!result.data)
+  for (size_t i = 0; i < if_expr->len; i++)
   {
-    return (value_t){
-        .type = VALUE_NONE,
-    };
+    value_t cond = eval(if_expr->conds[i][0]);
+    if (cond.data)
+    {
+      return eval(if_expr->conds[i][1]);
+    }
   }
 
-  return eval(if_expr->then_body);
+  return (value_t){
+      .type = VALUE_NONE,
+  };
 }
 
 static const value_t eval_number(const void *data)
@@ -294,18 +327,38 @@ expr_t nud_body(parser_t *p)
 
 expr_t nud_if(parser_t *p)
 {
-  const token_t *token = &p->tokens[p->pos];
+  token_t token = p->tokens[p->pos];
   p->pos++;
 
-  expr_t cond = parse_expr(p, LOWEST);
-  expr_t body = parse_expr(p, LOWEST);
-
   if_expr_t *if_expr = malloc(sizeof(if_expr_t));
+  if_expr->len = 0;
 
-  *if_expr = (if_expr_t){
-      .then = cond,
-      .then_body = body,
-  };
+  if_expr->conds[if_expr->len][0] = parse_expr(p, LOWEST);
+  if_expr->conds[if_expr->len][1] = parse_expr(p, LOWEST);
+  if_expr->len++;
+
+  while ((p->tokens[p->pos]).type == TOKEN_ELSE && (p->tokens[p->pos + 1]).type == TOKEN_IF)
+  {
+    p->pos += 2;
+    if_expr->conds[if_expr->len][0] = parse_expr(p, LOWEST);
+    if_expr->conds[if_expr->len][1] = parse_expr(p, LOWEST);
+    if_expr->len++;
+  }
+
+  if ((p->tokens[p->pos]).type == TOKEN_ELSE)
+  {
+    p->pos++;
+
+    if_expr->conds[if_expr->len][0] = (expr_t){
+        .data = (void *)(int64_t)1,
+        .kind = EXPR_NUMBER,
+        .eval = eval_number,
+    };
+
+    if_expr->conds[if_expr->len][1] = parse_expr(p, LOWEST);
+
+    if_expr->len++;
+  }
 
   return (expr_t){
       .kind = EXPR_IF,
@@ -343,7 +396,6 @@ value_t eval(expr_t expr)
 
 int main(void)
 {
-
   char *data = NULL;
 
   if (read_file("test.txt", &data) != 0)
@@ -365,6 +417,7 @@ int main(void)
   led_register(parser, TOKEN_MINUS, ADDITIVE, led_binary);
   led_register(parser, TOKEN_DIV, MUPTIPLICATIVE, led_binary);
   led_register(parser, TOKEN_MULT, MUPTIPLICATIVE, led_binary);
+
   // Comparison
   led_register(parser, TOKEN_GT, RELATIONAL, led_binary);
   led_register(parser, TOKEN_LT, RELATIONAL, led_binary);

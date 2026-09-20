@@ -117,7 +117,8 @@ parser_t *new_parser(const char *input)
     token_t tok = {0};
     lexer_error_t err;
 
-    token_t *tokens = malloc(sizeof(token_t) * 128);
+    token_t *tokens = malloc(sizeof(token_t) * 256);
+
     size_t count = 0;
     while ((err = next_token(lex, &tok)) == LEX_OK)
     {
